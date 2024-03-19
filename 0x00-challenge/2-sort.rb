@@ -7,7 +7,8 @@
 result = []
 ARGV.each do |arg|
     # skip if not integer
-    next if arg !~ /^-?[0-9]+$/
+    int_arg = arg.to_i.to_s == arg ? arg.to_i : nil
+    next if int_arg.nil?
 
     # convert to integer
     i_arg = arg.to_i
