@@ -1,30 +1,33 @@
 #!/usr/bin/python3
-"""Defines a square class."""
+""" Square class module """
 
 
-class Square:
-    """Represents a square."""
+class Square():
+    """ Square class definition """
+    width = 0
+    height = 0
 
-    def __init__(self, side_length):
-        """Initializes a Square object."""
-        self.side_length = side_length
+    def __init__(self, *args, **kwargs):
+        """ Initialize class """
+        for key, value in kwargs.items():
+            setattr(self, key, value)
 
-    def area(self):
-        """Calculates the area."""
-        return self.side_length ** 2
+    def area_of_my_square(self):
+        """ Area of the square """
+        return self.width * self.height
 
-    def perimeter(self):
-        """Calculates the perimeter."""
-        return 4 * self.side_length
+    def permiter_of_my_square(self):
+        """ Calculate square perimeter """
+        return (self.width * 2) + (self.height * 2)
 
     def __str__(self):
-        """Returns string representation."""
-        return f"Square with side length {self.side_length}"
+        """ String representation """
+        return "{}/{}".format(self.width, self.height)
 
 
 if __name__ == "__main__":
-    """Runs when directly executed."""
-    s = Square(12)
+    """ Main execution block """
+    s = Square(width=12, height=9)
     print(s)
-    print(s.area())
-    print(s.perimeter())
+    print(s.area_of_my_square())
+    print(s.permiter_of_my_square())
