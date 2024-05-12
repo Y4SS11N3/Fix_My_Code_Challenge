@@ -1,22 +1,24 @@
 #!/usr/bin/python3
 
 class Square:
-    def __init__(self, side=0):
-        self.side = side
 
-    def area_of_my_square(self):
+    def __init__(self, side_length):
+        self.side_length = side_length
+
+    def area(self):
         """ Area of the square """
-        return self.side * self.side
+        return self.side_length ** 2
 
-    def perimeter_of_my_square(self):
-        return 4 * self.side
+    def perimeter(self):
+        return 4 * self.side_length
 
     def __str__(self):
-        return "Square(side={})".format(self.side)
+        return f"Square with side length {self.side_length}"
 
 
 if __name__ == "__main__":
-    s = Square(side=12)
+
+    s = Square(12)
     print(s)
-    print("Area:", s.area_of_my_square())
-    print("Perimeter:", s.perimeter_of_my_square())
+    print(s.area())
+    print(s.perimeter())
