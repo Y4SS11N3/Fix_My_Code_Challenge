@@ -1,6 +1,6 @@
-var express = require('express'),
-    router = express.Router(),
-    PostController = require('../controllers/post.controller');
+var express = require('express');
+var router = express.Router();
+var PostController = require('../controllers/post.controller');
 
 router.route('/').get(PostController.showAllPosts);
 router.route('/page/:pageNum').get(PostController.showAllPosts);
