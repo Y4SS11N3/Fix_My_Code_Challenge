@@ -1,4 +1,4 @@
-var React = require('react/addons');
+var React = require('react');
 var AllPostStore = require('../stores/AllPostStore');
 var AllPostActions = require('../actions/AllPostActions');
 var PostPreview = require('./PostPreview.jsx');
@@ -7,79 +7,66 @@ var config = require('../../config');
 var PostListHeader = require('./PostListHeader.jsx');
 
 var PostListView = React.createClass({
+  contextTypes: {
+    router: React.PropTypes.object,
+  },
 
-    pageNum: 1,
-    itemsPerPage: config.itemsPerPage,
+  getInitialState: function () {
+    return AllPostStore.getState();
+  },
 
-    contextTypes: {
-        router: React.PropTypes.func
-    },
+  componentDidMount: function () {
+    AllPostStore.listen(this.onChange);
+    AllPostActions.getNumberOfPosts();
+    AllPostActions.loadPage(this.getPageNum());
+    AllPostActions.loadPostListContent();
+  },
 
-    componentWillMount: function() {
-        this.pageNum = parseInt(this.props.params.pageNum || AllPostStore.getState().pageNum);
-        AllPostActions.getNumberOfPosts();
-        AllPostActions.loadPage(this.pageNum);
-        AllPostActions.loadPostListContent();
-    },
+  componentWillUnmount: function () {
+    AllPostStore.unlisten(this.onChange);
+  },
 
-    componentDidMount : function() {
-        AllPostStore.listen(this.onChange);
-    },
-
-    componentWillUnmount : function() {
-        AllPostStore.unlisten(this.onChange);
-    },
-
-    componentWillReceiveProps(nextProps) {
-        if(!!nextProps.params.pageNum && nextProps.params.pageNum != this.pageNum) {
-            this.pageNum = parseInt(nextProps.params.pageNum);
-            AllPostActions.loadPage(this.pageNum);
-        }
-    },
-
-    onChange : function(state){
-        this.setState(state);
-    },
-
-    getInitialState : function(){
-        var state = AllPostStore.getState();
-        return state;
-    },
-
-    getNumberOfPages: function() {
-        return Math.ceil(this.state.numberOfPosts / this.itemsPerPage);
-    },
-
-    render : function() {
-        var posts = this.state.postsByPage[this.pageNum] || [];
-
-        posts = posts.map(function(post){
-            return (
-                <PostPreview key={post.id} post={post} />
-            )
-        });
-
-        return (
-            <div>
-                
-                <PostListHeader header={this.state.postListContent.header} content={this.state.postListContent.content}/>
-
-                <div className="post-list">
-                    {posts}
-                </div>
-
-                <div className="pagination-wrapper">
-
-                    <Pagination
-                        numberOfPages={this.getNumberOfPages()}
-                        maxButtons={config.maxPageButtons}
-                        activePage={this.pageNum}
-                        onSelect={this.handleSelect} />
-
-                </div>
-            </div>
-        )
+  componentWillReceiveProps: function (nextProps) {
+    var pageNum = parseInt(nextProps.params.pageNum, 10);
+    if (!isNaN(pageNum) && pageNum !== this.getPageNum()) {
+      AllPostActions.loadPage(pageNum);
     }
+  },
+
+  onChange: function (state) {
+    this.setState(state);
+  },
+
+  getPageNum: function () {
+    return parseInt(this.props.params.pageNum || 1, 10);
+  },
+
+  getNumberOfPages: function () {
+    return Math.ceil(this.state.numberOfPosts / config.itemsPerPage);
+  },
+
+  render: function () {
+    var pageNum = this.getPageNum();
+    var posts = this.state.postsByPage[pageNum] || [];
+
+    var postPreviews = posts.map(function (post) {
+      return <PostPreview key={post.id} post={post} />;
+    });
+
+    return (
+      <div>
+        <PostListHeader header={this.state.postListContent.header} content={this.state.postListContent.content} />
+        <div className="post-list">{postPreviews}</div>
+        <div className="pagination-wrapper">
+          <Pagination
+            numberOfPages={this.getNumberOfPages()}
+            maxButtons={config.maxPageButtons}
+            activePage={pageNum}
+          />
+        </div>
+      </div>
+    );
+  },
 });
 
 module.exports = PostListView;
