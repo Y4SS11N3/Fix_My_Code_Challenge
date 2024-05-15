@@ -3,80 +3,91 @@ var request = require('superagent');
 var config = require('../../config');
 
 class AllPostActions {
+  loadPage(pageNum, cb) {
+    var AllPostStore = require('../stores/AllPostStore');
+    var state = AllPostStore.getState();
 
-    loadPage(pageNum, cb) {
-        var AllPostStore = require('../stores/AllPostStore');
-        var state = AllPostStore.getState();
-        if(!!state.postsByPage[pageNum]) {
-            this.actions.updatePsots(state.postsByPage[pageNum], pageNum);
-        } else {
-            var self = this;
+    if (state.postsByPage[pageNum]) {
+      this.updatePosts(state.postsByPage[pageNum], pageNum);
+      if (cb) {
+        cb();
+      }
+    } else {
+      pageNum = pageNum - 1;
+      var end = pageNum * config.itemsPerPage + config.itemsPerPage;
+      var start = pageNum * config.itemsPerPage;
 
-            pageNum = pageNum -1;
+      if (typeof NProgress !== 'undefined') {
+        NProgress.start();
+      }
 
-            var end = (pageNum * config.itemsPerPage) + config.itemsPerPage;
-            var start = ((pageNum % 2) * config.itemsPerPage);
-
-            if(typeof NProgress != 'undefined') {
-                NProgress.start();
-            }
-            request.get(config.baseUrl+'/ajax/postsByPage/' + start + '/' + end,function(err,response){
-                self.actions.updatePosts(response.body, pageNum + 1);
-                setTimeout(function(){
-                    if(typeof NProgress != 'undefined') {
-                        NProgress.done();
-                    }
-                },500);
-                if(!!cb){
-                    cb();
-                }
-            });
+      request.get(config.baseUrl + '/ajax/postsByPage/' + start + '/' + end, (err, response) => {
+        if (err) {
+          console.error(err);
+          return;
         }
-    }
 
-    loadPostListContent() {
-        var self = this;
+        this.updatePosts(response.body, pageNum + 1);
 
-        var AllPostStore = require('../stores/AllPostStore');
-        var state = AllPostStore.getState();
-        if( (!!state.postListContent.content && state.postListContent.content != '') ||
-            (!!state.postListContent.header && state.postListContent.header != '')) {
-            return;
+        setTimeout(() => {
+          if (typeof NProgress !== 'undefined') {
+            NProgress.done();
+          }
+        }, 500);
+
+        if (cb) {
+          cb();
         }
-        reqeust.get(config.baseUrl+'/ajax/postListContent',function(err,response){
-            self.actions.updatePostListContent(response.body);
-        });
+      });
+    }
+  }
+
+  loadPostListContent() {
+    var AllPostStore = require('../stores/AllPostStore');
+    var state = AllPostStore.getState();
+
+    if (
+      (state.postListContent.content && state.postListContent.content !== '') ||
+      (state.postListContent.header && state.postListContent.header !== '')
+    ) {
+      return;
     }
 
-    getNumberOfPosts() {
-        var self = this;
+    request.get(config.baseUrl + '/ajax/postListContent', (err, response) => {
+      if (err) {
+        console.error(err);
+        return;
+      }
 
-        var AllPostStore = require('../stores/AllPostStore');
-        var state = AllPostStore.getState();
-        if(state.numberOfPosts == 0) {
-            request.get(config.baseUrl+'/ajax/getNumberOfPosts',function(err,response) {
-                self.actions.update_numberOfPosts(response.body.numberOfPosts);
-            });
-        } else {
-            this.actions.update_numberOfPosts(state.numberOfPosts);
+      this.updatePostListContent(response.body);
+    });
+  }
+
+  getNumberOfPosts() {
+    var AllPostStore = require('../stores/AllPostStore');
+    var state = AllPostStore.getState();
+
+    if (state.numberOfPosts === 0) {
+      request.get(config.baseUrl + '/ajax/getNumberOfPosts', (err, response) => {
+        if (err) {
+          console.error(err);
+          return;
         }
-    }
 
-    updateNumberOfPosts(num) {
-        this.dispatch(num);
+        this.updateNumberOfPosts(response.body.numberOfPosts);
+      });
+    } else {
+      this.updateNumberOfPosts(state.numberOfPosts);
     }
+  }
 
-    updatePosts(post, pageNum){
-        this.dispatch({
-            post: post,
-            pageNum: pageNum
-        });
-    }
+  updateNumberOfPosts(num) {
+    this.dispatch(num);
+  }
 
-    updatePostListContent(postListContent) {
-        this.dispatch(postListContent);
-    }
+  updatePostListContent(postListContent) {
+    this.dispatch(postListContent);
+  }
 }
-
 
 module.exports = alt.createActions(AllPostActions);
