@@ -1,165 +1,102 @@
-var React = require('react/addons');
+var React = require('react');
 var config = require('../../config');
 var Link = require('react-router').Link;
 
 var Pagination = React.createClass({
+  propTypes: {
+    numberOfPages: React.PropTypes.number.isRequired,
+    maxButtons: React.PropTypes.number.isRequired,
+    activePage: React.PropTypes.number.isRequired,
+  },
 
-    /**
-     *
-     * numberOfPages{this.getNumberOfPages()}
-     * maxButtons={5}
-     * activePage={this.state.pageNum}
-     * onSelect={this.handleSelect}
-     *
-     */
+  contextTypes: {
+    router: React.PropTypes.object,
+  },
 
+  renderPageLinks: function () {
+    var numberOfPages = this.props.numberOfPages;
+    var activePage = this.props.activePage;
+    var maxButtons = this.props.maxButtons;
+    var links = [];
 
-    itemsPerPage: config.itemsPerPage,
+    if (numberOfPages <= maxButtons) {
+      for (var i = 1; i <= numberOfPages; i++) {
+        var active = i === activePage ? 'active' : '';
+        links.push(
+          <li key={i} className={active}>
+            <Link to={'/page/' + i}>{i}</Link>
+          </li>
+        );
+      }
+    } else {
+      var startPage, endPage;
+      if (activePage <= Math.floor(maxButtons / 2)) {
+        startPage = 1;
+        endPage = maxButtons;
+      } else if (activePage + Math.floor(maxButtons / 2) >= numberOfPages) {
+        startPage = numberOfPages - maxButtons + 1;
+        endPage = numberOfPages;
+      } else {
+        startPage = activePage - Math.floor(maxButtons / 2);
+        endPage = activePage + Math.floor(maxButtons / 2);
+      }
 
-    contextTypes: {
-        router: React.PropTypes.func
-    },
-
-    _renderPageLinks: function() {
-        var numberOfPages = this.props.numberOfPages;
-        var activePage = this.props.activePage;
-        var maxButtons = this.props.maxButtons;
-
-        var links = [];
-        var active = '';
-        var prefix = 1 + '-';
-        if(numberOfPages > maxButtons) {
-            if(activePage <= maxButtons) {
-                prefix = 2 + '-';
-
-                //buttons on the left
-                for(var i=1; i<=maxButtons; i++) {
-                    active = '';
-                    if(i == activePage) {
-                        active = 'active';
-                    }
-
-                    links.push(
-                        <li className={active} key={prefix + i}>
-                            <Link to={'/page/' + i} role="button">{i}</Link>
-                        </li>);
-                }
-
-                links.push( <li className="disabled" key={prefix + 'more'}>
-                                <a role="button" href="">
-                                    <span aria-label="More">…</span>
-                                </a>
-                            </li>);
-                links.push( <li key={prefix + numberOfPages}>
-                                <Link to={'/page/' + numberOfPages} role="button">{numberOfPages}</Link>
-                            </li>);
-
-
-
-            } else if ((numberOfPages - activePage) < maxButtons){
-                prefix = 3 + '-';
-
-                //buttons on the right
-                links.push( <li key={prefix + 1}>
-                                <Link to={'/page/1'} role="button">1</Link>
-                            </li>);
-                links.push( <li className="disabled" key={prefix + 'more'}>
-                                <a role="button" href="">
-                                    <span aria-label="More">…</span>
-                                </a>
-                            </li>);
-
-                for(var i=(numberOfPages - maxButtons + 1); i<=numberOfPages; i++) {
-                    active = '';
-                    if(i == activePage) {
-                        active = 'active';
-                    }
-
-                    links.push(
-                        <li className={active} key={prefix + i}>
-                            <Link to={'/page/' + i} role="button">{i}</Link>
-                        </li>);
-                }
-
-            } else {
-                prefix = 4 + '-';
-
-                //buttons in the middle
-                links.push( <li key={prefix + '1'}>
-                                <Link to={'/page/1'} role="button">1</Link>
-                            </li>);
-                links.push( <li className="disabled" key={prefix + 'more-1'}>
-                                <a role="button" href="">
-                                    <span aria-label="More">…</span>
-                                </a>
-                            </li>);
-
-                for(var i=(activePage - (Math.floor(maxButtons/2))); i<=activePage + (Math.floor(maxButtons/2)); i++) {
-                    active = '';
-                    if(i == activePage) {
-                        active = 'active';
-                    }
-
-                    links.push(
-                        <li className={active} key={prefix + i}>
-                            <Link to={'/page/' + i} role="button">{i}</Link>
-                        </li>);
-                }
-
-                links.push( <li className="disabled" key={prefix + 'more-2'}>
-                                <a role="button" href="">
-                                    <span aria-label="More">…</span>
-                                </a>
-                            </li>);
-                links.push( <li key={prefix + numberOfPages}>
-                                <Link to={'/page/' + numberOfPages} role="button">{numberOfPages}</Link>
-                            </li>);
-            }
-        } else {
-            for(var i=1; i<=numberOfPages; i++) {
-                active = '';
-                if(i == activePage) {
-                    active = 'active';
-                }
-
-                links.push(
-                    <li className={active} key={prefix + i}>
-                        <Link to={'/page/' + i} role="button">{i}</Link>
-                    </li>);
-            }
+      if (startPage > 1) {
+        links.push(
+          <li key="first">
+            <Link to="/page/1">1</Link>
+          </li>
+        );
+        if (startPage > 2) {
+          links.push(
+            <li key="ellipsis-start" className="disabled">
+              <span>...</span>
+            </li>
+          );
         }
+      }
 
-        return links;
-    },
+      for (var j = startPage; j <= endPage; j++) {
+        var active = j === activePage ? 'active' : '';
+        links.push(
+          <li key={j} className={active}>
+            <Link to={'/page/' + j}>{j}</Link>
+          </li>
+        );
+      }
 
-    render : function() {
-
-        return (
-            <ul className="pagination-container pagination">
-                <li className={this.props.activePage == 1 ? 'disabled' : ''}>
-                    <Link role="button" to={'/page/1'}>
-                        <span aria-label="First">«</span>
-                    </Link>
-                </li>
-                <li className={this.props.activePage == 1 ? 'disabled' : ''}>
-                    <Link role="button" to={'/page/' +(this.props.activePage - 1)}>
-                        <span aria-label="Previous">‹</span>
-                    </Link>
-                </li>
-                {this._renderPageLinks()}
-                <li className={this.props.activePage == this.props.numberOfPages ? 'disabled' : ''}>
-                    <Link role="button" to={'/page/' + (this.props.activePage + 1)}>
-                        <span aria-label="Next">›</span>
-                    </Link>
-                </li>
-                <li className={this.props.activePage == this.props.numberOfPages ? 'disabled' : ''}>
-                    <Link role="button" to={'/page/' +this.props.numberOfPages}>
-                        <span aria-label="Last">»</span>
-                    </Link>
-                </li>
-            </ul>
-        )
+      if (endPage < numberOfPages) {
+        if (endPage < numberOfPages - 1) {
+          links.push(
+            <li key="ellipsis-end" className="disabled">
+              <span>...</span>
+            </li>
+          );
+        }
+        links.push(
+          <li key="last">
+            <Link to={'/page/' + numberOfPages}>{numberOfPages}</Link>
+          </li>
+        );
+      }
     }
+
+    return links;
+  },
+
+  render: function () {
+    return (
+      <ul className="pagination">
+        <li className={this.props.activePage === 1 ? 'disabled' : ''}>
+          <Link to={'/page/' + (this.props.activePage - 1)}>&laquo;</Link>
+        </li>
+        {this.renderPageLinks()}
+        <li className={this.props.activePage === this.props.numberOfPages ? 'disabled' : ''}>
+          <Link to={'/page/' + (this.props.activePage + 1)}>&raquo;</Link>
+        </li>
+      </ul>
+    );
+  },
 });
 
 module.exports = Pagination;
